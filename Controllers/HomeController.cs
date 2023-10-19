@@ -8,15 +8,15 @@ namespace TodoApp.Controllers;
 public class HomeController : ControllerBase
 {
     [HttpGet("/")]
-    public List<TodoModel> Get([FromServices] AppDbContext appDbContext)
+    public IActionResult Get([FromServices] AppDbContext appDbContext)
     {
-        return appDbContext.Todos.ToList();
+        return Ok(appDbContext.Todos.ToList());
     }
-    
+
     [HttpPost("/")]
-    public List<TodoModel> Post([FromServices] AppDbContext appDbContext, [FromBody] TodoModel model)
+    public IActionResult Post([FromServices] AppDbContext appDbContext, [FromBody] TodoModel model)
     {
-        var todo = new TodoModel()
+        var todo = new TodoModel
         {
             Title = model.Title,
             Done = model.Done,
@@ -25,6 +25,38 @@ public class HomeController : ControllerBase
 
         appDbContext.Todos.Add(todo);
         appDbContext.SaveChanges();
-        return appDbContext.Todos.ToList();
+        return Ok(appDbContext.Todos.ToList());
+    }
+
+    [HttpPut("/{id:int}")]
+    public IActionResult Put([FromServices] AppDbContext appDbContext, [FromBody] TodoModel model, [FromRoute] int id)
+    {
+        var todo = appDbContext.Todos.FirstOrDefault(todoModel => todoModel.Id == id);
+        if (todo == null)
+        {
+            return BadRequest();
+        }
+
+        todo.Title = model.Title;
+        todo.Done = model.Done;
+        appDbContext.Todos.Update(todo);
+        appDbContext.SaveChanges();
+        
+        return Ok(todo);
+    }
+
+    [HttpDelete("/{id:int}")]
+    public IActionResult Delete([FromServices] AppDbContext appDbContext, [FromRoute] int id)
+    {
+        var todo = appDbContext.Todos.FirstOrDefault(model => model.Id == id);
+        if (todo == null)
+        {
+            return BadRequest();
+        }
+
+        appDbContext.Todos.Remove(todo);
+        appDbContext.SaveChanges();
+
+        return Ok();
     }
 }
